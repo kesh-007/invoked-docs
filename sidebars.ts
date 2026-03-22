@@ -12,12 +12,7 @@ const sidebars: SidebarsConfig = {
     {
       type: "category",
       label: "Features",
-      items: ["features/tools", "features/skills", "features/memory", "features/processors"],
-    },
-    {
-      type: "category",
-      label: "Automations",
-      items: ["automations/overview", "automations/cron", "automations/webhooks"],
+      items: ["features/tools", "features/skills", "features/mcp", "features/memory", "features/processors"],
     },
     "examples",
   ],

@@ -8,7 +8,75 @@ sidebar_position: 2
 
 Skills are other agents (or custom functions) the main agent can invoke autonomously to handle complete sub-tasks end to end.
 
-## Define a skill from an agent
+## Skill files
+
+The easiest way to define reusable skills is as markdown files. The frontmatter configures the agent, the body is its system prompt.
+
+```
+skills/
+  researcher.md
+  analyst.md
+  formatter.md
+```
+
+**`skills/researcher.md`**
+
+```markdown
+---
+name: researcher
+description: Handles all web research tasks
+allowedTools: ["WebSearch", "WebFetch"]
+scratchpad: true
+---
+
+You are a research analyst. Search the web thoroughly and summarise findings with cited sources.
+Always include at least 3 sources.
+```
+
+**`skills/analyst.md`**
+
+```markdown
+---
+name: analyst
+description: Analyses data and provides strategic insights
+---
+
+You are a data analyst. Identify patterns, trends, and give clear actionable recommendations.
+```
+
+Load them into any agent:
+
+```typescript
+import { Agent, loadSkill, loadSkills } from "invoked";
+
+// Load a single skill
+const researcher = loadSkill("./skills/researcher.md");
+
+// Load all skills from a directory
+const skills = loadSkills("./skills");
+
+const orchestrator = new Agent({
+  name: "orchestrator",
+  instructions: "You coordinate tasks. Delegate to your skills.",
+  skills,
+});
+
+await orchestrator.generate("Research the latest AI news and write an analysis");
+```
+
+### Supported frontmatter fields
+
+| Field | Type | Description |
+|---|---|---|
+| `name` | `string` | Required. Unique skill/agent name |
+| `description` | `string` | Required. Tells the orchestrator when to use this skill |
+| `allowedTools` | `string[]` | Built-in Claude Code tools, e.g. `["WebSearch", "WebFetch"]` |
+| `scratchpad` | `boolean` | Enable internal notepad for complex tasks |
+| `mcpServers` | `object` | Connect to MCP servers (JSON object) |
+
+---
+
+## Define a skill in code
 
 ```typescript
 import { Agent } from "invoked";
@@ -19,19 +87,19 @@ const researcher = new Agent({
   allowedTools: ["WebSearch", "WebFetch"],
 });
 
-// Expose as a skill
-const researchSkill = researcher.asSkill(
-  "Search the web and return a detailed summary with sources"
-);
+const orchestrator = new Agent({
+  name: "orchestrator",
+  instructions: "You coordinate tasks. Delegate research to your skills.",
+  skills: [researcher.asSkill("Handles all web research")],
+});
 ```
 
-## Or use defineSkill()
+## Custom function skill
 
 ```typescript
 import { defineSkill } from "invoked";
 import { z } from "zod";
 
-// Backed by a custom function
 const formatJson = defineSkill({
   name: "format_json",
   description: "Pretty-print a raw JSON string",
@@ -40,65 +108,6 @@ const formatJson = defineSkill({
 });
 ```
 
-## Attach to an orchestrator
-
-```typescript
-const orchestrator = new Agent({
-  name: "orchestrator",
-  instructions: `You coordinate tasks. Delegate to skills when needed.
-Use researcher for any web lookups.
-Use analyst for data analysis.`,
-  skills: [
-    researcher.asSkill("Handles all web research and news lookup"),
-    analyst.asSkill("Analyses data and provides strategic insights"),
-  ],
-});
-
-// The orchestrator autonomously decides when to call each skill
-await orchestrator.generate(
-  "Research the latest news on NVIDIA and analyse if it's a good investment"
-);
-```
-
 ## How it works
 
 Each skill becomes an MCP tool named `skill_<name>` that Claude can call at any time during a response. When called, it runs the skill's agent or function and returns the result back to the orchestrator.
-
-## Full example
-
-```typescript
-import { Agent, defineTool } from "invoked";
-import { z } from "zod";
-
-const researcher = new Agent({
-  name: "researcher",
-  instructions: "Search and summarise web content with cited sources.",
-  allowedTools: ["WebSearch", "WebFetch"],
-});
-
-const analyst = new Agent({
-  name: "analyst",
-  instructions: "Analyse data, find patterns, give actionable insights.",
-});
-
-const fetchPrice = defineTool({
-  name: "fetch_price",
-  description: "Get the current price of a stock ticker",
-  input: { ticker: z.string() },
-  run: async ({ ticker }) => `$142.50 for ${ticker}`,
-});
-
-const orchestrator = new Agent({
-  name: "orchestrator",
-  instructions: "You coordinate research and analysis tasks.",
-  tools: [fetchPrice],
-  skills: [
-    researcher.asSkill("Handles all web research"),
-    analyst.asSkill("Analyses data and provides insights"),
-  ],
-});
-
-const report = await orchestrator.generate(
-  "Research the latest news on NVIDIA and analyse whether it's a good time to invest"
-);
-```

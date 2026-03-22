@@ -141,70 +141,72 @@ const report = await researcher.generate(
 
 ---
 
-## Daily report cron
+## Agent with MCP server
 
 ```typescript
-import { Agent, createAutomation, startAutomations } from "invoked";
-import { writeFileSync } from "fs";
+import { Agent } from "invoked";
 
-const reporter = new Agent({
-  name: "reporter",
-  instructions: "You write concise daily briefings.",
-  allowedTools: ["Read", "Glob"],
+const agent = new Agent({
+  name: "coder",
+  instructions: "You help with code tasks. Use the filesystem to read and write files.",
+  mcpServers: {
+    filesystem: {
+      command: "npx",
+      args: ["-y", "@modelcontextprotocol/server-filesystem", "./src"],
+    },
+  },
 });
 
-createAutomation("daily-briefing")
-  .cron("0 9 * * 1-5")
-  .run(async (ctx) => {
-    const report = await reporter.generate(
-      `Write a morning briefing for ${new Date(ctx.triggeredAt).toDateString()}.`
-    );
-    writeFileSync(`./reports/${ctx.triggeredAt.slice(0, 10)}.md`, report);
-  });
-
-await startAutomations();
+const result = await agent.generate("List all TypeScript files and summarise what each one does");
 ```
 
 ---
 
-## Multi-automation app
+## Agent with multiple MCP servers
 
 ```typescript
-import { Agent, createAutomation, startAutomations } from "invoked";
+import { Agent } from "invoked";
 
-const reporter   = new Agent({ name: "reporter",   instructions: "Write summary reports." });
-const classifier = new Agent({ name: "classifier", instructions: "Classify support tickets." });
-const notifier   = new Agent({ name: "notifier",   instructions: "Draft notification messages." });
+const agent = new Agent({
+  name: "analyst",
+  instructions: "You query databases and write analysis reports.",
+  mcpServers: {
+    postgres: {
+      command: "npx",
+      args: ["-y", "@modelcontextprotocol/server-postgres", process.env.DATABASE_URL!],
+    },
+    filesystem: {
+      command: "npx",
+      args: ["-y", "@modelcontextprotocol/server-filesystem", "./reports"],
+    },
+  },
+});
 
-createAutomation("daily-report")
-  .cron("0 9 * * 1-5")
-  .agent(reporter)
-  .prompt("Compile today's key metrics and write a 3-paragraph summary.")
-  .start();
+const report = await agent.generate(
+  "Query the orders table for last month and write a summary report to ./reports/monthly.md"
+);
+```
 
-createAutomation("support-ticket")
-  .webhook("/support", { method: "POST" })
-  .agent(classifier)
-  .prompt((req) => {
-    const ticket = req.body as { subject: string; message: string };
-    return `Classify this ticket: ${ticket.subject} — ${ticket.message}`;
-  })
-  .start();
+---
 
-createAutomation("notify")
-  .webhook("/notify", { method: "POST" })
-  .run(async (req) => {
-    const { event, user } = req.body as { event: string; user: string };
-    const message = await notifier.generate(`Draft a notification for "${user}" about: ${event}`);
-    return { sent: true, message };
-  });
+## Output validation with processor retry
 
-createAutomation("health")
-  .webhook("/health", { method: "GET" })
-  .run((_req, ctx) => ({ status: "ok", timestamp: ctx.triggeredAt }));
+```typescript
+import { Agent, createOutputProcessor } from "invoked";
+import { z } from "zod";
 
-await startAutomations({
-  port: 3000,
-  onError: (name, err) => console.error(`[ERROR] "${name}" failed:`, err),
+const enforceJson = createOutputProcessor(async (ctx) => {
+  try {
+    JSON.parse(ctx.result);
+    return ctx;
+  } catch {
+    return { ...ctx, retry: { prompt: `Return valid JSON only. Previous attempt: ${ctx.result}` } };
+  }
+});
+
+const agent = new Agent({
+  name: "json-agent",
+  instructions: "Always respond with valid JSON.",
+  outputPipeline: [enforceJson],
 });
 ```

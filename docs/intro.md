@@ -7,72 +7,61 @@ slug: /
 
 # invoked
 
-A lightweight TypeScript package for building Claude-powered agents, cron jobs, and webhook automations — runs on your existing Claude Code subscription, **no API key required**.
+A lightweight TypeScript library for building Claude-powered agents — runs on your existing Claude Code subscription, **no API key required**.
 
 ## What can you build?
 
 - **Chat agents** — Q&A, summarisation, code explanation
 - **Structured data extractors** — typed JSON output from natural language
 - **Orchestrators** — one agent that coordinates a team of specialised sub-agents
-- **Automated workflows** — cron jobs and webhook handlers backed by Claude
+- **Tool-using agents** — connect to any MCP server or define your own tools
 
 ## Core features
 
 | Feature | What it does |
 |---|---|
 | **Agent** | Claude-powered entity with tools and skills — stateless by default |
-| **Tools** | Typed TypeScript functions Claude can call (fetch, calculate, query DB…) |
-| **Skills** | Delegate complex sub-tasks to specialised sub-agents |
+| **Tools** | Typed TypeScript functions Claude can call |
+| **Skills** | Delegate sub-tasks to specialised sub-agents |
+| **MCP servers** | Connect to any Model Context Protocol server — stdio or SSE |
 | **Scratchpad** | Opt-in internal notepad — agent tracks its own goal and notes |
 | **Streaming** | Real token-by-token output |
 | **generateObject** | Guaranteed typed JSON via Zod schemas |
-| **Automations** | Cron jobs and webhook endpoints that run agents on a schedule or on demand |
+| **Processors** | Transform inputs and outputs with a middleware pipeline |
 
 ## Quick look
 
-### Agents
-
 ```typescript
-import { Agent, defineTool, defineSkill } from "invoked";
+import { Agent, defineTool } from "invoked";
 import { z } from "zod";
 
+// Simple agent
 const agent = new Agent({
   name: "assistant",
   instructions: "You are a helpful assistant.",
-  tools: [myTool],
-  skills: [mySkill],
 });
 
 const answer = await agent.generate("What is TypeScript?");
 
+// Stream token by token
 for await (const chunk of agent.stream("Tell me a story")) {
   process.stdout.write(chunk);
 }
 
+// Structured output
 const result = await agent.generateObject(
   "Extract: Alice is 30, knows TypeScript.",
   z.object({ name: z.string(), age: z.number() })
 );
-```
 
-### Automations
-
-```typescript
-import { createAutomation, startAutomations } from "invoked";
-
-createAutomation("daily-report")
-  .cron("0 9 * * *")
-  .agent(myAgent)
-  .prompt("Compile today's summary report")
-  .start();
-
-createAutomation("pr-review")
-  .webhook("/github", { method: "POST" })
-  .agent(codeReviewer)
-  .prompt((req) => `Review this PR: ${JSON.stringify(req.body)}`)
-  .start();
-
-await startAutomations({ port: 3000 });
+// With MCP server
+const fsAgent = new Agent({
+  name: "coder",
+  instructions: "You help with code.",
+  mcpServers: {
+    filesystem: { command: "npx", args: ["-y", "@modelcontextprotocol/server-filesystem", "./"] },
+  },
+});
 ```
 
 ## Next steps
@@ -81,4 +70,4 @@ await startAutomations({ port: 3000 });
 - [Your first agent →](./api/agent)
 - [Tools →](./features/tools)
 - [Skills →](./features/skills)
-- [Automations →](./automations/overview)
+- [MCP servers →](./features/mcp)
