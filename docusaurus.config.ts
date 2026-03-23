@@ -53,7 +53,7 @@ const config: Config = {
     },
     footer: {
       style: "dark",
-      copyright: `Built with invoked · ${new Date().getFullYear()}`,
+      copyright: `<div style="text-align: center;"><p>Build Claude-powered agents in TypeScript</p><p style="font-size: 0.85rem; opacity: 0.7;">© ${new Date().getFullYear()} · <strong>invoked</strong></p></div>`,
     },
     prism: {
       theme: prismThemes.vsDark,
