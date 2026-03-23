@@ -12,6 +12,15 @@ const config: Config = {
   onBrokenLinks: "warn",
   markdown: { hooks: { onBrokenMarkdownLinks: "warn" } },
   i18n: { defaultLocale: "en", locales: ["en"] },
+  plugins: [
+    [
+      "vercel-analytics",
+      {
+        debug: false,
+        mode: "auto",
+      },
+    ],
+  ],
   presets: [
     [
       "classic",
