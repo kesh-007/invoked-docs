@@ -47,12 +47,12 @@ You are a data analyst. Identify patterns, trends, and give clear actionable rec
 Load them into any agent:
 
 ```typescript
-import { Agent, loadSkill, loadSkills } from "invoked";
+import { Agent, loadSkills } from "invoked";
 
-// Load a single skill
-const researcher = loadSkill("./skills/researcher.md");
+// Single file → array with that one skill
+const skills = loadSkills("./skills/researcher.md");
 
-// Load all skills from a directory
+// Directory → all .md files loaded as skills
 const skills = loadSkills("./skills");
 
 const orchestrator = new Agent({

@@ -6,7 +6,7 @@ sidebar_position: 1
 
 # Agent
 
-The core class. Create one per use case — each agent has its own name, instructions, tools, and skills. Agents are **stateless by default**.
+The core class. Create one per use case — each agent has its own name, instructions, tools, and skills. Agents remember conversation history across calls by default.
 
 ## Create an agent
 
@@ -25,6 +25,7 @@ const agent = new Agent({
 new Agent({
   name: string,
   instructions: string | ((ctx: InputContext) => string),
+  memory?: boolean,            // default: true  — set false for stateless one-shot agents
   scratchpad?: boolean,        // default: false
   allowedTools?: string[],
   tools?: ToolDef[],

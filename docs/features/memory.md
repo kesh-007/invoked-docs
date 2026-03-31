@@ -1,12 +1,33 @@
 ---
 id: memory
-title: Scratchpad
+title: Memory
 sidebar_position: 3
 ---
 
-# Scratchpad
+# Memory
 
-Agents are **stateless by default** — each call is independent and no history is stored between runs. This is intentional: stateless agents are simpler, more predictable, and work great for most automations.
+Agents remember conversation history across calls by default. Each call resumes from where the last one left off.
+
+Set `memory: false` for agents that should be fully independent — no history loaded or saved, every call is a clean slate.
+
+## Disable memory
+
+```typescript
+const summarizer = new Agent({
+  name: "summarizer",
+  instructions: "Summarize the given text concisely.",
+  memory: false,
+});
+
+// Every call is independent — no session written
+const summary = await summarizer.generate(longText);
+```
+
+Use this for one-shot tasks: summarization, classification, formatting, data extraction.
+
+---
+
+## Scratchpad
 
 When you need the agent to track what it's doing across a complex multi-step task, enable the scratchpad.
 
@@ -39,13 +60,14 @@ notes:
 ## When to use it
 
 ```typescript
-// Stateless — good for Q&A, data extraction, one-shot tasks
+// memory: false — one-shot tasks with no history needed
 const extractor = new Agent({
   name: "extractor",
   instructions: "Extract structured data from text.",
+  memory: false,
 });
 
-// With scratchpad — good for complex research, multi-step workflows
+// scratchpad — complex research, multi-step workflows
 const researcher = new Agent({
   name: "researcher",
   instructions: "Research topics thoroughly using web search.",
