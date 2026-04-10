@@ -24,12 +24,15 @@ const agent = new Agent({
 ```typescript
 new Agent({
   name: string,
+  description?: string,        // what this agent does — used by the Orchestrator planner
   instructions: string | ((ctx: InputContext) => string),
   memory?: boolean,            // default: true  — set false for stateless one-shot agents
   scratchpad?: boolean,        // default: false
+  model?: string,              // e.g. "claude-opus-4-6" or "claude-sonnet-4-6"
   allowedTools?: string[],
   tools?: ToolDef[],
   skills?: SkillDef[],
+  mcpServers?: Record<string, McpServerConfig>,
   inputPipeline?: InputMiddleware[],
   outputPipeline?: OutputMiddleware[],
 })
@@ -78,6 +81,7 @@ new Agent({
 | `generateObject(prompt, schema)` | `Promise<z.infer<T>>` | Typed structured output |
 | `clearMemory()` | `void` | Clear scratchpad and session |
 | `asSkill(description)` | `SkillDef` | Expose as a skill for another agent |
+| `withModel(model)` | `Agent` | New stateless agent with a different model |
 
 ## Scratchpad
 

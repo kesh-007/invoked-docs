@@ -81,6 +81,55 @@ console.log(contact.email);   // "sarah@acme.io"
 
 ---
 
+## Multi-agent Orchestrator
+
+```typescript
+import { Agent, Orchestrator } from "invoked";
+
+const researcher = new Agent({
+  name: "researcher",
+  description: "Finds facts and data on any topic",
+  instructions: "You are a research specialist. Return 3-5 key facts about the given topic.",
+  allowedTools: ["WebSearch", "WebFetch"],
+  memory: false,
+});
+
+const analyst = new Agent({
+  name: "analyst",
+  description: "Analyses information and extracts key insights",
+  instructions: "You are a data analyst. Identify the 2-3 most important insights from what you receive.",
+  memory: false,
+});
+
+const writer = new Agent({
+  name: "writer",
+  description: "Writes polished content for a general audience",
+  instructions: "You are a content writer. Turn facts and insights into an engaging explanation.",
+  memory: false,
+});
+
+const orchestrator = new Orchestrator({
+  name: "blog-pipeline",
+  agents: [researcher, analyst, writer],
+});
+
+// Non-streaming — returns final synthesized answer
+const { conclusion } = await orchestrator.generate(
+  "Write a blog post about how WebAssembly is changing the web"
+);
+console.log(conclusion);
+
+// Streaming — react to each event
+for await (const event of orchestrator.stream("Explain quantum computing simply")) {
+  if (event.type === "agent_start")      console.log(`\n▶ [${event.agent}]`);
+  if (event.type === "agent_chunk")      process.stdout.write(event.chunk);
+  if (event.type === "conclusion_chunk") process.stdout.write(event.chunk);
+  if (event.type === "done")             console.log("\n\nDone!");
+}
+```
+
+---
+
 ## Orchestrator with skills
 
 ```typescript

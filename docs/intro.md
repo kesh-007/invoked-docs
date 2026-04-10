@@ -20,9 +20,11 @@ A lightweight TypeScript library for building Claude-powered agents — runs on 
 
 | Feature | What it does |
 |---|---|
-| **Agent** | Claude-powered entity with tools and skills — stateless by default |
+| **Agent** | Claude-powered entity with tools, skills, and memory |
+| **Orchestrator** | Multi-agent pipelines — plan → parallel/sequential execution → synthesized conclusion |
 | **Tools** | Typed TypeScript functions Claude can call |
-| **Skills** | Delegate sub-tasks to specialised sub-agents |
+| **Skills** | Delegate sub-tasks to specialised sub-agents autonomously |
+| **Model Router** | Dynamically route each task to the best model at runtime |
 | **MCP servers** | Connect to any Model Context Protocol server — stdio or SSE |
 | **Scratchpad** | Opt-in internal notepad — agent tracks its own goal and notes |
 | **Streaming** | Real token-by-token output |
@@ -70,4 +72,5 @@ const fsAgent = new Agent({
 - [Your first agent →](./api/agent)
 - [Tools →](./features/tools)
 - [Skills →](./features/skills)
+- [Orchestrator →](./features/orchestrator)
 - [MCP servers →](./features/mcp)
